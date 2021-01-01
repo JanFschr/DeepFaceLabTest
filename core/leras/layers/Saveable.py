@@ -38,7 +38,7 @@ class Saveable():
 
         nn.batch_set_value (tuples)
 
-    def save_weights(self, filename, force_dtype=None):
+    def save_weights(self, filename, force_dtype=None, streaming_pickle=False):
         d = {}
         weights = self.get_weights()
 
@@ -56,18 +56,41 @@ class Saveable():
 
             d[ w_name_split[1] ] = w_val
 
-        d_dumped = pickle.dumps (d, 4)
-        pathex.write_bytes_safe ( Path(filename), d_dumped )
+        if not streaming_pickle:
+            d_dumped = pickle.dumps (d, 4)
+            pathex.write_bytes_safe ( Path(filename), d_dumped )
+            return
+ 
+        #appending multiple pickle streams in one file
+        p =  Path(filename)
+        p_tmp = p.parent / (p.name + '.tmp')
+ 
+        for key, value in d.items():
+            with open(p_tmp, 'ab') as handle:
+                entry={}
+                entry[key] = value
+                pickle.dump(entry, handle, protocol=4)
+ 
+        if p.exists():
+            p.unlink()
+        p_tmp.rename (p)
 
     def load_weights(self, filename):
         """
-        returns True if file exists
+        returns True if file exists and is an loadable pickle
         """
+        d = {}
         filepath = Path(filename)
         if filepath.exists():
             result = True
-            d_dumped = filepath.read_bytes()
-            d = pickle.loads(d_dumped)
+            with open(filepath, 'rb') as handle:
+                while True:
+                    try:
+                        d.update(pickle.load(handle))
+                    except EOFError:
+                        break
+            if not d:
+                return False
         else:
             return False
 

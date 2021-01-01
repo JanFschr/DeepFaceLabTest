@@ -63,6 +63,8 @@ class SAEHDModel(ModelBase):
         default_ct_mode            = self.options['ct_mode']            = self.load_or_def_option('ct_mode', 'none')
         default_clipgrad           = self.options['clipgrad']           = self.load_or_def_option('clipgrad', False)
         default_pretrain           = self.options['pretrain']           = self.load_or_def_option('pretrain', False)
+        
+        default_streaming_pickle   = self.options['streaming_pickle']   = self.load_or_def_option('streaming_pickle', False)
 
         ask_override = self.ask_override()
         if self.is_first_run() or ask_override:
@@ -71,6 +73,7 @@ class SAEHDModel(ModelBase):
             self.ask_target_iter()
             self.ask_random_flip()
             self.ask_batch_size(suggest_batch_size)
+            self.ask_streaming_pickle()
 
         if self.is_first_run():
             resolution = io.input_int("Resolution", default_resolution, add_info="64-640", help_message="More resolution requires more VRAM and time to train. Value will be adjusted to multiple of 16 and 32 for -d archi.")
@@ -703,9 +706,9 @@ Examples: df, liae, df-d, df-ud, liae-ud, ...
         return self.model_filename_list
 
     #override
-    def onSave(self):
+    def onSave(self):         
         for model, filename in io.progress_bar_generator(self.get_model_filename_list(), "Saving", leave=False):
-            model.save_weights ( self.get_strpath_storage_for_file(filename) )
+            model.save_weights ( self.get_strpath_storage_for_file(filename) , streaming_pickle=self.options['streaming_pickle'])
 
     #override
     def should_save_preview_history(self):
