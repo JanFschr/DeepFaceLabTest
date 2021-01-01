@@ -433,7 +433,7 @@ def get_image_eye_mask (image_shape, image_landmarks):
 
     return hull_mask
 
-def get_image_mouth_mask (image_shape, image_landmarks):
+def get_image_mouth_mask (image_shape, image_landmarks, blur_and_dilate=True):
     if len(image_landmarks) != 68:
         raise Exception('get_image_eye_mask works only with 68 landmarks')
 
@@ -444,14 +444,16 @@ def get_image_mouth_mask (image_shape, image_landmarks):
     image_landmarks = image_landmarks.astype(np.int)
 
     cv2.fillConvexPoly( hull_mask, cv2.convexHull( image_landmarks[48:60]), (1,) )
-
-    dilate = h // 32
-    hull_mask = cv2.dilate(hull_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(dilate,dilate)), iterations = 1 )
-
-    blur = h // 16
-    blur = blur + (1-blur % 2)
-    hull_mask = cv2.GaussianBlur(hull_mask, (blur, blur) , 0)
-    hull_mask = hull_mask[...,None]
+    
+    if blur_and_dilate:
+        dilate = h // 32
+        hull_mask = cv2.dilate(hull_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(dilate,dilate)), iterations = 1 )
+        
+        blur = h // 16
+        blur = blur + (1-blur % 2)
+        hull_mask = cv2.GaussianBlur(hull_mask, (blur, blur) , 0)
+        
+        hull_mask = hull_mask[...,None]
 
     return hull_mask
     

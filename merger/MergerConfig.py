@@ -141,6 +141,8 @@ class MergerConfigMasked(MergerConfig):
         self.image_denoise_power = image_denoise_power
         self.bicubic_degrade_power = bicubic_degrade_power
         self.color_degrade_power = color_degrade_power
+        self.only_use_mouth_mask  = only_use_mouth_mask 
+
 
     def copy(self):
         return copy.copy(self)
@@ -148,6 +150,8 @@ class MergerConfigMasked(MergerConfig):
     def set_mode (self, mode):
         self.mode = mode_dict.get (mode, self.default_mode)
 
+    def toggle_only_use_mouth_mask(self):
+         self.only_use_mouth_mask = not self.only_use_mouth_mask
     def toggle_masked_hist_match(self):
         if self.mode == 'hist-match':
             self.masked_hist_match = not self.masked_hist_match
@@ -210,6 +214,7 @@ class MergerConfigMasked(MergerConfig):
         self.mask_mode = io.input_int ("", 1, valid_list=mask_mode_dict.keys() )
 
         if 'raw' not in self.mode:
+            self.only_use_mouth_mask  = io.input_bool("Only use mouth mask? (only works with maskmode dst)", False)
             self.erode_mask_modifier = np.clip ( io.input_int ("Choose erode mask modifier", 0, add_info="-400..400"), -400, 400)
             self.blur_mask_modifier =  np.clip ( io.input_int ("Choose blur mask modifier", 0, add_info="0..400"), 0, 400)
             self.motion_blur_power = np.clip ( io.input_int ("Choose motion blur power", 0, add_info="0..100"), 0, 100)
@@ -217,9 +222,10 @@ class MergerConfigMasked(MergerConfig):
         self.output_face_scale = np.clip (io.input_int ("Choose output face scale modifier", 0, add_info="-50..50" ), -50, 50)
 
         if 'raw' not in self.mode:
-            self.color_transfer_mode = io.input_str ( "Color transfer to predicted face", None, valid_list=list(ctm_str_dict.keys())[1:] )
-            self.color_transfer_mode = ctm_str_dict[self.color_transfer_mode]
-
+            self.color_transfer_mode = io.input_str ( "Color transfer to predicted face", None, valid_list=["None"]+list(ctm_str_dict.keys())[1:] )
+            if self.color_transfer_mode == "None": self.color_transfer_mode = None
+            else: self.color_transfer_mode = ctm_str_dict[self.color_transfer_mode]
+            
         super().ask_settings()
 
         self.super_resolution_power = np.clip ( io.input_int ("Choose super resolution power", 0, add_info="0..100", help_message="Enhance details by applying superresolution network."), 0, 100)
@@ -248,7 +254,8 @@ class MergerConfigMasked(MergerConfig):
                    self.super_resolution_power == other.super_resolution_power and \
                    self.image_denoise_power == other.image_denoise_power and \
                    self.bicubic_degrade_power == other.bicubic_degrade_power and \
-                   self.color_degrade_power == other.color_degrade_power
+                   self.color_degrade_power == other.color_degrade_power and \
+                   self.only_use_mouth_mask  == other.only_use_mouth_mask 
 
         return False
 
@@ -263,6 +270,7 @@ class MergerConfigMasked(MergerConfig):
 
         if self.mode == 'hist-match' or self.mode == 'seamless-hist-match':
             r += f"""hist_match_threshold: {self.hist_match_threshold}\n"""
+        r += f"""only_use_mouth_mask : {self.only_use_mouth_mask}\n"""
 
         r += f"""mask_mode: { mask_mode_dict[self.mask_mode] }\n"""
 

@@ -18,7 +18,15 @@ def MergeMaskedFace (predictor_func, predictor_input_shape,
                      cfg, frame_info, img_bgr_uint8, img_bgr, img_face_landmarks):
 
     img_size = img_bgr.shape[1], img_bgr.shape[0]
-    img_face_mask_a = LandmarksProcessor.get_image_hull_mask (img_bgr.shape, img_face_landmarks)
+    #img_face_mask_a = LandmarksProcessor.get_image_hull_mask (img_bgr.shape, img_face_landmarks)
+
+    #get mouth mask
+    if cfg.only_use_mouth_mask :
+        img_face_mask_a = LandmarksProcessor.get_image_mouth_mask (img_bgr.shape, img_face_landmarks, blur_and_dilate=False)
+    else:
+        img_face_mask_a = LandmarksProcessor.get_image_hull_mask (img_bgr.shape, img_face_landmarks)
+        
+   
 
     input_size = predictor_input_shape[0]
     mask_subres_size = input_size*4
