@@ -310,7 +310,7 @@ class ModelBase(object):
     
     def ask_streaming_pickle(self):
         default_streaming_pickle = self.load_or_def_option('streaming_pickle', False)
-        self.options['streaming_pickle'] = io.input_bool("Use streaming pickle savemode? Warning: breaks compability to other dfl versions (see help)", default_random_flip, help_message="TODO")
+        self.options['streaming_pickle'] = io.input_bool("Use streaming pickle savemode? Warning: breaks compability to other dfl versions (see help)", default_streaming_pickle, help_message="TODO")
 
 
     #overridable
